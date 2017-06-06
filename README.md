@@ -1,18 +1,23 @@
-jquery-webos-win10½éÉÜ
-===========================
-####½éÉÜ
-***jquery-webos-win10£¬ÊÇÒ»¸öÄ£ÄâWIN10ÏµÍ³×ÀÃæµÄÊ¾Àı³ÌĞò¡£
------------
-###Ê¹ÓÃ×é¼ş
-***
-*jquery.contextMenu.js			  	ÓÒ¼ü²Ëµ¥
-*jquery.gridster.js					×ÀÃæ²¼¾Ö
-*Metro-UI-CSS						»ù´¡CSS
-*jquery.jspanel.js					µ¯³ö²ã
-*require.js							Ä£¿é»¯¼ÓÔØ
-*jquery.mCustomScrollbar.js			¹ö¶¯ÌõÀ©Õ¹
-*vue.js								MVVM¿ò¼Ü
-***
------------
-#±¸×¢
-***ÎŞ
+jquery-webos-win10ä»‹ç»
+========================
+
+jquery-webos-win10ï¼Œæ˜¯ä¸€ä¸ªæ¨¡æ‹ŸWIN10ç³»ç»Ÿæ¡Œé¢çš„ç¤ºä¾‹ç¨‹åºã€‚
+
+## ä½¿ç”¨ç»„ä»¶
+#### CSSç»„ä»¶
+
+```{bash}				
+1.åŸºç¡€CSS Metro-UI-CSS								
+```
+#### jqueryç»„ä»¶
+
+```{bash}
+1.å³é”®èœå• jquery.contextMenu.js			  	
+2.æ¡Œé¢å¸ƒå±€ jquery.gridster.js					
+3.å¼¹å‡ºå±‚ jquery.jspanel.js					
+4.æ¨¡å—åŒ–åŠ è½½ require.js							
+5.æ»šåŠ¨æ¡æ‰©å±• jquery.mCustomScrollbar.js			
+6.MVVMæ¡†æ¶ vue.js								
+```
+## å¤‡æ³¨
+æ— 
