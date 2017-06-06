@@ -1,0 +1,661 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Metro-UI定制开发</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="libs/Metro-UI-CSS/css/metro.css" rel="stylesheet" />
+    <link href="libs/Metro-UI-CSS/css/metro-icons.css" rel="stylesheet" />
+    <link href="libs/Metro-UI-CSS/css/metro-colors.css" rel="stylesheet" />
+    <link href="libs/Metro-UI-CSS/css/metro-responsive.css" rel="stylesheet" />
+    <!--/*主界面网格*/-->
+    <link href="libs/Gridster/jquery.gridster.css" rel="stylesheet" />
+    <!--/*右键菜单*/-->
+    <link href="libs/ContextMenu/jquery.contextMenu.css" rel="stylesheet" />
+    <!--/*滚动条*/-->
+    <link href="libs/Scrollbar/jquery.mCustomScrollbar.css" rel="stylesheet" />
+    <!--/*弹出面板*/-->
+    <link href="libs/Panel/jquery.jspanel.css" rel="stylesheet" />
+    <link href="libs/default.css" rel="stylesheet" />
+
+    <script src="libs/jquery-2.1.3.min.js"></script>
+    <script src="libs/Metro-UI-CSS/js/metro.js"></script>
+    <script src="libs/Gridster/jquery.gridster.js"></script>
+    <script src="libs/ContextMenu/jquery.contextMenu.js"></script>
+    <script src="libs/Scrollbar/jquery.mCustomScrollbar.js"></script>
+    <script src="libs/Panel/jquery.jspanel.js"></script>
+    <script type="text/javascript">
+        //全局缓存
+        var MOS = {};
+        /*防止选中文本*/
+        document.onselectstart = function (event) {
+            //event.returnValue = false;
+        }
+        var gridster;
+        $(function () {
+            //初始化网格
+            MOS['gridster'] = $("#desktop .tile-container").gridster({
+                limit: {
+                    // IsWidth: false,//是否自动计算高度
+                    // IsHeight: false,//是否自动计算宽度
+                    width: true,//是否限制宽度
+                    height: true//是否限制高度
+                },
+                widget_selector: '.tile-small',
+                avoid_overlapped_widgets: true,//是否允许重叠或异常
+                max_rows: GetRows(),//可以显示多少行
+                namespace: '#desktop',//命名空间
+                widget_base_dimensions: [72, 72],//单项大小
+                widget_margins: [10, 10],//上下左右间距
+                draggable: {
+                    start: function (event, ui) {
+                        //alert("statr");
+                        console.log("start");
+                    },
+                    drag: function (event, ui) {
+                        console.log("drag");
+                    },
+                    stop: function (event, ui) {
+                        console.log("stop");
+                    }
+                },
+            }).data('gridster');
+            //添加
+            for (var i = 0; i < 50; i++) {
+                MOS['gridster'].add_widget(' <div class="tile-small" id="tile-small' + i + '" data-role="tile" data-row="1" data-col="1" data-sizex="1" data-sizey="1"> <div class="shortcut-icon"> <img src="Test/WebApplication1/ioc/zf.png" style="width:36px; height:36px;" />                </div>                <div class="shortcut-name">个性化' + i + '</div>            </div>', 1, 1);
+            }
+            function GetRows()
+            {
+                var rows = Math.floor(($(window).height() - 43) / 85);
+                if (rows == 0) {
+                    rows = 1;
+                }
+                return rows;
+            }
+            //窗体发送改变时 重新计算位置
+            $(window).resize(function () {
+                var rows = GetRows();
+                var cols = Math.ceil(50 / rows);
+                //乾坤大挪移移行换位
+                MOS['gridster'].options.max_cols = cols;
+                MOS['gridster'].cols = cols;
+
+                MOS['gridster'].options.max_rows = rows;
+                MOS['gridster'].rows = rows;
+                console.log(rows + ":" + cols);
+                MOS['gridster'].init();
+            });
+            //显示面板
+            $('#desktop .tile-small').dblclick(function (e) {
+
+                var id = $(this).attr('id');
+                AddPanel(id, $(this).text(), '<p>Some sample text ...</p>',{ width: 600, height: 350 });
+            });
+            function AddPanel(id, text, content, contentSize)
+            {
+                if (MOS[id] == null || MOS[id] == undefined) {
+                    //添加到任务栏
+                    var temphtml = ' <li data-flexorderorigin="0" data-flexorder="1" class="app-bar-height" id="' + id + '-min">';
+                    temphtml += ' <a href="#" class="app-bar-height task-rw">';
+                    temphtml += ' <span class="">';
+                    temphtml += '  <img src="' + $(this).find('img').attr('src') + '" style="width:36px; height:36px;">';
+                    temphtml += ' </span>';
+                    temphtml += text;
+                    temphtml += '  </a>';
+                    temphtml += '  </li>';
+                    $('#Panel-replacement').append(temphtml);
+                    MOS[id] = $.jsPanel({
+                        headerLogo: "/Test/WebApplication1/ioc/zf.png",
+                        theme: "blue",
+                        taskid: id + '-min',
+                        minimizeTo: false,
+                        headerTitle: text,
+                        content: content,
+                        contentSize: contentSize,
+                        //position: { my: "center-top", at: "center-top", offsetY: 15 },
+                        callback: function () {
+                            this.content.css("border-top", "0px");
+                        },
+                        onclosed: function () {
+                            $('#' + this.option.taskid).remove();
+                            MOS[id] = null;
+                        }
+                    });
+                    //TODO:设置区域
+                    // console.log(MOS[id].content);
+                } else {
+                    MOS[id].normalize();
+                }
+            }
+            $("#Panel-replacement").on('click', 'a', function () {
+                var id = $(this).parent().attr('id');
+                id = id.replace('-min', '');
+                if (MOS[id] == null || MOS[id] == undefined) { } else {
+                    MOS[id].data('status') === 'minimized' ? MOS[id].normalize() : MOS[id].minimize();
+                }
+            });
+            //防止事件冒泡
+            $('.StartScreen').click(function (e) {
+                e.stopPropagation();
+                return false;
+            });
+            //阻止事件冒泡
+            $('body').on('click', '.context-menu-list', function (e) {
+                e.stopPropagation();
+                return false;
+            });
+            //阻止事件冒泡
+            $('body').on('click', '.charm', function (e) {
+                e.stopPropagation();
+                return false;
+            });
+            $('body').click(function (e) {
+                //影藏面板
+                hideMetroCharm('#mos-desktop-bgm-charm');
+            });
+            function SelectItems(Items,key)
+            {
+                for (var k in Items) {
+                    if (k == key) {
+                        return Items[k];
+                    } else {
+                        if (Items[k].items != null || Items[k].items != undefined) {
+                            var temp = SelectItems(Items[k].items, key);
+                            if (temp != null || temp != undefined) {
+                                return temp;
+                            }
+                        } 
+                    }
+                }
+            }
+            //右键菜单插件
+            $.contextMenu({
+                selector: '.wallpaper',
+                zIndex: 999,
+                build: function ($trigger, e) {
+                    return {
+                        callback: function (key, options) {
+                            if (key == 'mos-desktop-bgm') {
+                                showMetroCharm('#mos-desktop-bgm-charm', 'right');
+                            } else if (key == "UserSettings") {
+                                AddPanel(key, '个性化设置', $('#UserSettingsTemp').html(), { width: 1000, height: 600 });
+                            } else {
+                                var tempItem = SelectItems(options.items, key);
+                                $.Notify({ type: 'info', caption: tempItem.name, content: "测试版本该功能尚未开放！！！" });
+                            }
+                        },
+                        items: {
+                            "test1": {
+                                name: "图标显示",
+                                icon: " mif-apps Menuex",
+                                items: {
+                                    "normalsub1": { name: "大" },
+                                    "normalsub2": { name: "小" },
+                                }
+                            },
+                            "mos-desktop-bgm": {
+                                name: "桌面样式",
+                                icon: " mif-widgets Menuex",
+                            },
+                            "test3": { name: "全屏显示", icon: " mif-enlarge Menuex" },
+                            "sep1": "---------",
+                            "test4": { name: "应用管理", icon: " mif-list2 Menuex" },
+                            "test5": { name: "待办任务", icon: " mif-folder-special Menuex" },
+                            "sep2": "---------",
+                            "UserSettings": { name: "个性化设置", icon: " mif-cog Menuex" },
+                            "test7": { name: "个人中心", icon: " mif-user Menuex" },
+                            "test8": { name: "关于我们", }
+
+                        }
+                    };
+                }
+            });
+            //应用右键菜单
+            $.contextMenu({
+                selector: '#desktop .tile-small',
+                zIndex: 999,
+                build: function ($trigger, e) {
+                    return {
+                        callback: function (key, options) {
+                            if (key == 'open') {
+                                this.dblclick();
+                            } else {
+                                var tempItem = SelectItems(options.items, key);
+                                $.Notify({ type: 'info', caption: tempItem.name, content: "测试版本该功能尚未开放！！！" });
+                            }
+                        },
+                        items: {
+                            "open": { name: "打开", icon: " mif-enlarge Menuex" },
+                            "test4": { name: "隐藏", icon: " mif-list2 Menuex" },
+                            "test5": { name: "添加到快速启动栏", icon: " mif-folder-special Menuex" },
+                            "sep2": "---------",
+                            "test6": { name: "移出", icon: " mif-cog Menuex" },
+
+                        },
+                        events: {
+                            show: function (options) {
+                                this.addClass('select-menu');
+                            },
+                            hide: function (options) {
+                                this.removeClass('select-menu');
+                            }
+                        }
+                    }
+                }
+            });
+            //初始化滚动条
+            $(".scrollbar").mCustomScrollbar();
+            //背景图片切换
+            $("#mos-desktop-bgm-charm").on('click', '.image-container', function () {
+                var srcimg = $(this).find('img').attr('src');
+                $('.wallpaper-image').attr('src', srcimg);
+                $('.wallpaper-image').fadeIn("slow");
+            });
+            $('body').on('click', '.sidebar li', function () {
+                if (!$(this).hasClass('active')) {
+                    $('.sidebar li').removeClass('active');
+                    $(this).addClass('active');
+                }
+            });
+        });
+    </script>
+
+</head>
+<body style="overflow:hidden;">
+    <!--系统主界面-->
+    <div class="tile-area no-padding bg-blue gridster" id="desktop">
+        <div class="tile-container  " style="height:100%;z-index:2;">
+            <!--<div class="tile-small " data-role="tile" data-row="1" data-col="1" data-sizex="1" data-sizey="1">
+                <div class="shortcut-icon"> <img src="Test/WebApplication1/ioc/zf.png" style="width:36px; height:36px;" />  </div>
+                <div class="shortcut-name">个性化设置</div>
+            </div>-->
+            
+        </div>
+    </div>
+    <div class="app-bar drop-up" data-role="appbar" style="position:absolute;left:0px;bottom:0px;">
+        <div class="app-bar-element app-bar-height">
+            <span id="toggle-tiles-dropdown2" class="mif-apps mif-2x"></span>
+            <div class="app-bar-drop-container container-btn StartScreen" data-role="dropdown"
+                 data-toggle-element="#toggle-tiles-dropdown2" data-no-close="false" style="width:690px; display: none;opacity: 0.96;background-color: #0072c6;overflow:hidden;">
+                <div class="flex-grid demo-grid">
+                    <div class="row">
+                        <div class="cell colspan5 scrollbar" style="height: 500px;overflow: auto;">
+                            <ul class="v-menu block-shadow-impact subdown no-padding no-margin no-shadow v-menu-ex" style="width:90%;">
+                                <li><a href="#" class="v-menulia"><span class="mif-user icon v-menu-ex"></span> 个人中心</a></li>
+                                <li class="menu-title menu-title-ex">系统管理</li>
+                                <li class="divider"></li>
+                                <li><a href="#" class="v-menulia"><span class="mif-home icon v-menu-ex"></span>任务列表</a></li>
+                                <li><a href="#" class="v-menulia"><span class="mif-user icon v-menu-ex"></span>权限管理</a></li>
+                                <li><a href="#" class="v-menulia"><span class="mif-calendar icon v-menu-ex"></span>用户管理</a></li>
+                                <li><a href="#" class="v-menulia"><span class="mif-image icon v-menu-ex"></span> 注册中心</a></li>
+                                <li class="menu-title menu-title-ex v-menu-ex">其他设置</li>
+                                <li class="divider"></li>
+                                <li>
+                                    <a href="#" class="dropdown-toggle v-menu-ex"><span class="mif-my-location icon v-menu-ex"></span>多层次级联菜单</a>
+                                    <ul class="d-menu no-shadow no-border" data-role="dropdown" style="width:100%;">
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+                                        <li><a href="#" class=" v-menu-ex"><span class="mif-user icon v-menu-ex"></span>第二层</a></li>
+
+                                    </ul>
+                                </li>
+                                <li><a href="#" class="v-menulia"><span class="mif-bubbles icon v-menu-ex"></span>其他</a></li>
+                            </ul>
+                        </div>
+                        <div class="cell colspan7 scrollbar" style="height: 500px;overflow: auto;" id="StartScreen">
+                            <div class="tile-group no-margin ">
+                                <span class="tile-group-title" style="font-size:14px;">常用功能</span>
+                                <div class="tile-container ">
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;" data-row="1" data-col="1" data-sizex="1" data-sizey="1">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;" data-row="1" data-col="1" data-sizex="1" data-sizey="1">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;" data-row="1" data-col="1" data-sizex="1" data-sizey="1">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tile-group no-margin ">
+                                <span class="tile-group-title" style="font-size:14px;">常用功能</span>
+                                <div class="tile-container ">
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="tile-group no-margin ">
+                                <span class="tile-group-title" style="font-size:14px;">常用功能</span>
+                                <div class="tile-container ">
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tile-group no-margin ">
+                                <span class="tile-group-title" style="font-size:14px;">常用功能</span>
+                                <div class="tile-container ">
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tile-group no-margin ">
+                                <span class="tile-group-title" style="font-size:14px;">常用功能</span>
+                                <div class="tile-container ">
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+
+                                    <div class="tile-small bg-cyan fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-envelop"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                    <div class="tile-small bg-red fg-white" data-role="tile" style="width:85px; height:85px;">
+                                        <div class="tile-content iconic">
+                                            <span class="icon mif-cogs"></span>
+                                        </div>
+                                        <div class="tile-label tile-labelex no-margin no-padding">系统设置</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-bar-divider app-bar-height"></div>
+        <ul class="app-bar-menu" id="Panel-replacement">
+            <!--id="jsPanel-replacement-container"-->
+            <!--<li data-flexorderorigin="0" data-flexorder="1" class="app-bar-height">
+                <a href="#" class="app-bar-height task-rw">
+                    <span class="">
+                        <img src="Test/WebApplication1/ioc/zf.png" style="width:36px; height:36px;">
+                    </span>
+                    个人设置
+                </a>
+            </li>-->
+        </ul>
+        <div class="app-bar-element place-right app-bar-height">
+            <a class="fg-white"><span class="mif-enter"></span>设置</a>
+        </div>
+
+        <div class="app-bar-divider place-right app-bar-height"></div>
+        <div class="app-bar-pullbutton automatic" style="display: none;"></div><div class="clearfix" style="width: 0;"></div><nav class="app-bar-pullmenu hidden flexstyle-app-bar-menu" style="display: none;"><ul class="app-bar-pullmenubar hidden app-bar-menu"></ul></nav>
+    </div>
+
+    <div class="wallpaper">
+        <img class="wallpaper-image"  src="DesktopBackground/11.jpg" />
+    </div>
+    <div class="" data-role="charm" id="mos-desktop-bgm-charm" style="background-color:#0072c6;border: 2px solid #005696;width:400px;">
+        <div class="scrollbar" style="height:100%;overflow:auto;margin-right:-15px;">
+            <div class="image-container element-selected" style="margin-right:15px;margin-top:5px;">
+                <div class="frame">
+                    <img src="DesktopBackground/10.jpg" />
+                </div>
+                <div class="image-overlay">
+                    <h2>唯美背景</h2>
+                    <p>
+                        唯美主义运动（Aesthetic movement）是于19世纪后期出现在英国艺。。。
+                    </p>
+                </div>
+            </div>
+
+            <div class="image-container element" style="margin-right:15px;margin-top:5px;">
+                <div class="frame">
+                    <img src="DesktopBackground/11.jpg" />
+                </div>
+                <div class="image-overlay">
+                    <h2>唯美背景</h2>
+                    <p>
+                        唯美主义运动（Aesthetic movement）是于19世纪后期出现在英。。。
+                    </p>
+                </div>
+            </div>
+
+            <div class="image-container element" style="margin-right:15px;margin-top:5px;">
+                <div class="frame">
+                    <img src="DesktopBackground/cloud.jpg" />
+                </div>
+                <div class="image-overlay">
+                    <h2>唯美背景</h2>
+                    <p>
+                        唯美主义运动（Aesthetic movement）是于19世纪后期出现在英。。。
+                    </p>
+                </div>
+            </div>
+
+            <div class="image-container element" style="margin-right:15px;margin-top:5px;">
+                <div class="frame">
+                    <img src="DesktopBackground/Wood.jpg" />
+                </div>
+                <div class="image-overlay">
+                    <h2>唯美背景</h2>
+                    <p>
+                        唯美主义运动（Aesthetic movement）是于19世纪后期出现在英。。。
+                    </p>
+                </div>
+            </div>
+            <div class="image-container element" style="margin-right:15px;margin-top:5px;">
+                <div class="frame">
+                    <img src="DesktopBackground/Yuanye.jpg" />
+                </div>
+                <div class="image-overlay">
+                    <h2>唯美背景</h2>
+                    <p>
+                        唯美主义运动（Aesthetic movement）是于19世纪后期出现在英。。。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/html" id="UserSettingsTemp">
+        <div class="flex-grid no-responsive-future" style="height: 100%;z-index:99;">
+            <div class="row" style="height: 100%">
+                <div class="cell size-x200" id="cell-sidebar" style="background-color: #0072c6;height: 100%;">
+                    <ul class="sidebar">
+                        <li class="active">
+                            <a href="#">
+                                <span class="mif-apps icon"></span>
+                                <span class="title">系统设置</span>
+                                <span class="counter">详细信息设置</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-vpn-publ icon"></span>
+                                <span class="title">websites</span>
+
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-drive-eta icon"></span>
+                                <span class="title">Virtual machines</span>
+                                <span class="counter">2</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-cloud icon"></span>
+                                <span class="title">Cloud services</span>
+                                <span class="counter">0</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-database icon"></span>
+                                <span class="title">SQL Databases</span>
+                                <span class="counter">0</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-cogs icon"></span>
+                                <span class="title">Automation</span>
+                                <span class="counter">0</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="#">
+                                <span class="mif-apps icon"></span>
+                                <span class="title">all items</span>
+                                <span class="counter">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="cell auto-size padding20 bg-white" id="cell-content">
+                    <h1 class="text-light">Virtual machines</h1>
+                    <hr class="thin bg-grayLighter">
+                    <button class="button primary" onclick="pushMessage('info')"><span class="mif-plus"></span> Create...</button>
+                    <button class="button success" onclick="pushMessage('success')"><span class="mif-play"></span> Start</button>
+                    <button class="button warning" onclick="pushMessage('warning')"><span class="mif-loop2"></span> Restart</button>
+                    <button class="button alert" onclick="pushMessage('alert')">Stop all machines</button>
+                    <hr class="thin bg-grayLighter">
+
+                </div>
+            </div>
+        </div>
+
+    </script>
+</body>
+</html>
