@@ -2,6 +2,8 @@ jquery-webos-win10介绍
 ========================
 
 jquery-webos-win10，是一个模拟WIN10系统桌面的示例程序。
+![image](https://github.com/txg911807/jquery-webos-win10/raw/master/test/20170610113008.png)
+
 
 ## 使用组件
 #### CSS组件
